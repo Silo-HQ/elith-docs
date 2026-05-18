@@ -21,6 +21,8 @@ const withMDX = createMDX({
 
 const nextConfig = {
   output: 'export',
+  basePath: '/elith-docs',
+  assetPrefix: '/elith-docs',
   trailingSlash: true,
   pageExtensions: ['js','jsx','ts','tsx','md','mdx'],
   images: { unoptimized: true },
