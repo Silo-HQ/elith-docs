@@ -1,0 +1,307 @@
+---
+title: "API Reference"
+description: "CLI commands and REST API endpoints."
+sidebarLabel: "reference"
+annotation: "3.00"
+order: 30
+---
+
+# API Reference
+
+## CLI Commands
+
+### elith init
+
+Initialize Elith configuration:
+
+```bash
+elith init
+```
+
+Creates `~/.elith/config.toml` with provider settings.
+
+### elith explain
+
+Understand code with detailed explanations:
+
+```bash
+elith explain <file_or_directory>
+```
+
+Examples:
+```bash
+elith explain src/auth/login.ts
+elith explain src/cache/
+```
+
+### elith architect
+
+Design solutions and create architecture plans:
+
+```bash
+elith architect "<task description>"
+```
+
+Examples:
+```bash
+elith architect "Design a caching layer for the API"
+elith architect "Plan database migration strategy"
+```
+
+### elith refactor
+
+Implement code changes:
+
+```bash
+elith refactor "<task description>"
+```
+
+Examples:
+```bash
+elith refactor "Add error handling to auth module"
+elith refactor "Optimize database queries in user service"
+```
+
+### elith test-gen
+
+Generate test suites:
+
+```bash
+elith test-gen <file>
+```
+
+Examples:
+```bash
+elith test-gen src/auth/login.ts
+elith test-gen src/cache/redis-client.ts
+```
+
+### elith service
+
+Manage the backend service:
+
+```bash
+elith service start     # Start backend daemon
+elith service stop      # Stop backend daemon
+elith service restart   # Restart backend daemon
+elith service status    # Check if running
+```
+
+The backend auto-starts when you run any operation command.
+
+## REST API
+
+Base URL: `http://localhost:8000`
+
+### POST /scan
+
+Scan repository structure:
+
+```bash
+curl -X POST http://localhost:8000/scan \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repo_path": "/path/to/repo"
+  }'
+```
+
+Response:
+```json
+{
+  "files": 247,
+  "directories": 42,
+  "languages": ["TypeScript", "Python", "JavaScript"]
+}
+```
+
+### POST /execute
+
+Execute an operation:
+
+```bash
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operation": "explain",
+    "target": "src/auth/login.ts",
+    "repo_path": "/path/to/repo"
+  }'
+```
+
+Operations: `explain`, `architect`, `refactor`, `test-gen`
+
+Response:
+```json
+{
+  "session_id": "abc123",
+  "status": "running"
+}
+```
+
+### GET /stream
+
+Stream operation results via Server-Sent Events:
+
+```bash
+curl -N http://localhost:8000/stream?session_id=abc123
+```
+
+Event format:
+```
+data: {"type": "token", "content": "Analyzing code..."}
+
+data: {"type": "skill", "name": "read_file", "args": {"path": "src/auth/login.ts"}}
+
+data: {"type": "complete", "session_id": "abc123"}
+```
+
+Event types:
+- `token` — Streaming LLM output
+- `skill` — Skill execution
+- `complete` — Operation finished
+- `error` — Operation failed
+
+### GET /models
+
+List available models:
+
+```bash
+curl http://localhost:8000/models
+```
+
+Response:
+```json
+{
+  "providers": [
+    {
+      "name": "claude",
+      "enabled": true,
+      "models": ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
+    },
+    {
+      "name": "lmstudio",
+      "enabled": false,
+      "models": ["local-model"]
+    },
+    {
+      "name": "openrouter",
+      "enabled": false,
+      "models": ["anthropic/claude-3.5-sonnet"]
+    }
+  ]
+}
+```
+
+### GET /tasks
+
+List recent tasks:
+
+```bash
+curl http://localhost:8000/tasks
+```
+
+Response:
+```json
+{
+  "tasks": [
+    {
+      "session_id": "abc123",
+      "operation": "explain",
+      "target": "src/auth/login.ts",
+      "timestamp": "2026-05-18T12:30:45Z",
+      "status": "complete"
+    }
+  ]
+}
+```
+
+### GET /history
+
+Get session history:
+
+```bash
+curl http://localhost:8000/history
+```
+
+Response:
+```json
+{
+  "sessions": [
+    {
+      "id": "abc123",
+      "operation": "refactor",
+      "started": "2026-05-18T12:30:45Z",
+      "completed": "2026-05-18T12:35:12Z",
+      "files_modified": 4,
+      "provider": "claude-3-5-sonnet-20241022"
+    }
+  ]
+}
+```
+
+### GET /results/:session_id
+
+Get operation results:
+
+```bash
+curl http://localhost:8000/results/abc123
+```
+
+Response:
+```json
+{
+  "session_id": "abc123",
+  "operation": "refactor",
+  "status": "complete",
+  "output": "Full operation output...",
+  "files_modified": ["src/auth/login.ts", "src/auth/types.ts"],
+  "report_path": "bob-reports/session_20260518_123045_abc123.md"
+}
+```
+
+## CLI Exit Codes
+
+- `0` — Success
+- `1` — Operation failed
+- `2` — Configuration error
+- `3` — Backend not running
+
+## Environment Variables
+
+Override config with environment variables:
+
+```bash
+# Provider API keys
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GOOGLE_API_KEY=AIza...
+
+# Provider selection
+ANTHROPIC_MODEL=claude-3-opus-20240229
+OPENROUTER_API_KEY=sk-or-...
+
+# Backend configuration
+ELITH_BACKEND_PORT=8000
+ELITH_LOG_LEVEL=DEBUG
+```
+
+## Session Logs
+
+All operations are logged to `bob-reports/`:
+
+```bash
+# List all sessions
+ls -la bob-reports/
+
+# View a session
+cat bob-reports/session_20260518_123045_abc123.md
+
+# View session history JSON
+cat bob-reports/session_history.json
+```
+
+## Next Steps
+
+- [Authentication](/docs/en/api/authentication) — API key setup
+- [Troubleshooting](/docs/en/troubleshooting) — Common errors
+- [Integrations](/docs/en/guides/integrations) — CI/CD setup

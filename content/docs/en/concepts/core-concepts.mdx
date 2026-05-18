@@ -1,0 +1,353 @@
+---
+title: "Core Concepts"
+description: "Operations, skills, and the provider layer."
+sidebarLabel: "core-concepts"
+annotation: "1.01"
+order: 11
+---
+
+# Core Concepts
+
+## Operations
+
+Elith provides 4 core operations that work with any LLM provider:
+
+### 1. Explain
+
+Analyze and explain your codebase architecture in plain language.
+
+```bash
+elith explain
+elith explain src/auth/
+```
+
+**What it does:**
+- Scans repository structure
+- Identifies key components
+- Explains how they interact
+- Describes technology stack
+- Points out entry points
+
+**Use cases:**
+- Onboarding new developers
+- Understanding unfamiliar codebases
+- Documenting architecture
+- Code review preparation
+
+### 2. Architect
+
+Propose architectural improvements specific to your codebase.
+
+```bash
+elith architect --problem "Add rate limiting to API"
+```
+
+**What it does:**
+- Analyzes current architecture
+- Proposes repo-specific improvements
+- Avoids generic textbook answers
+- References actual files and patterns
+- Provides migration paths
+
+**Use cases:**
+- Scaling existing systems
+- Modernizing legacy code
+- Adding new features
+- Performance optimization
+
+### 3. Refactor
+
+Refactor code with focus on specific improvements.
+
+```bash
+elith refactor src/cache/redis-client.ts
+elith refactor src/cache/ --focus "modernize to redis v4"
+```
+
+**What it does:**
+- Identifies code smells
+- Applies design patterns
+- Improves maintainability
+- Optimizes performance
+- Enhances error handling
+
+**Use cases:**
+- Technical debt reduction
+- Code quality improvement
+- Preparing for new features
+- Performance optimization
+
+### 4. Test Generation
+
+Generate comprehensive test suites for your code.
+
+```bash
+elith test-gen src/auth/login.ts
+elith test-gen src/
+```
+
+**What it does:**
+- Matches existing test framework
+- Covers happy path scenarios
+- Tests edge cases
+- Validates error handling
+- Checks boundary conditions
+
+**Use cases:**
+- Increasing test coverage
+- Testing legacy code
+- TDD workflow
+- Regression prevention
+
+## The 12 Skills
+
+All operations have access to 12 repository skills via tool calling:
+
+### File Operations
+
+**read_file** ([`read_file.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/read_file.py))
+```python
+# Read file with line numbers
+read_file(path="src/auth/login.ts")
+# Returns: "File: src/auth/login.ts (45 lines)\n\n1 | import..."
+```
+
+**write_file** ([`write_file.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/write_file.py))
+```python
+# Write or overwrite file (auto-creates directories)
+write_file(path="src/utils/helper.ts", content="export const...")
+# Returns: "✓ Written: src/utils/helper.ts (23 lines)"
+```
+
+**list_files** ([`list_files.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/list_files.py))
+```python
+# List directory contents
+list_files(path="src/", recursive=True)
+# Returns: "Contents of src/:\nsrc/auth/login.ts\nsrc/auth/register.ts..."
+```
+
+### Code Search
+
+**search_code** ([`search_code.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/search_code.py))
+```python
+# Regex search across files
+search_code(query="async function", file_pattern="*.ts")
+# Returns: "Found 'async function' in:\nsrc/api/users.ts:15:async function getUser()..."
+```
+
+**find_references** ([`find_references.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/find_references.py))
+```python
+# Find all usages of a symbol
+find_references(symbol="UserModel")
+# Returns: "References to 'UserModel':\nsrc/models/user.ts:5:export class UserModel..."
+```
+
+### Git Operations
+
+**git_diff** ([`git_diff.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/git_diff.py))
+```python
+# Show uncommitted changes
+git_diff(target="HEAD", path="src/auth/")
+# Returns: "Git diff (HEAD):\ndiff --git a/src/auth/login.ts..."
+```
+
+**git_commit** ([`git_commit.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/git_commit.py))
+```python
+# Stage and commit changes
+git_commit(message="Add rate limiting to auth endpoints")
+# Returns: "✓ Committed: Add rate limiting to auth endpoints\n[main abc123] ..."
+```
+
+### Analysis
+
+**analyze_dependencies** ([`analyze_dependencies.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/analyze_dependencies.py))
+```python
+# Parse package files
+analyze_dependencies()
+# Returns: "--- package.json ---\nDependencies (15):\nreact@18.2.0..."
+```
+
+**explain_function** ([`explain_function.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/explain_function.py))
+```python
+# Extract function source (uses Python AST for .py files)
+explain_function(path="src/auth.py", name="login")
+# Returns: "Source of login in src/auth.py:\n\ndef login(username, password):..."
+```
+
+### Execution
+
+**run_tests** ([`run_tests.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/run_tests.py))
+```python
+# Execute test suite (auto-detects pytest/npm)
+run_tests(path="tests/auth/")
+# Returns: "Test results:\n===== test session starts =====\n..."
+```
+
+**install_package** ([`install_package.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/install_package.py))
+```python
+# Add dependencies (auto-detects pip/npm)
+install_package(package="redis", dev=False)
+# Returns: "✓ Installed redis\nSuccessfully installed redis-4.5.0"
+```
+
+**read_logs** ([`read_logs.py`](https://github.com/Silo-HQ/elith/blob/main/backend/skills/read_logs.py))
+```python
+# Parse log files (auto-detects common locations)
+read_logs(path="logs/app.log", lines=100)
+# Returns: "Last 100 lines of app.log:\n2026-05-17 15:35:49 INFO ..."
+```
+
+## Provider Layer
+
+Elith normalizes tool calling across different LLM providers:
+
+### How It Works
+
+1. **Skill Definition** — Each skill implements `BaseSkill`:
+```python
+class ReadFileSkill(BaseSkill):
+    @property
+    def name(self) -> str:
+        return "read_file"
+    
+    @property
+    def parameters(self) -> dict:
+        return {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "..."}
+            },
+            "required": ["path"]
+        }
+    
+    def execute(self, repo_path: str, **kwargs) -> str:
+        # Implementation
+        pass
+```
+
+2. **Format Conversion** — Skills convert to provider-specific formats:
+```python
+# Anthropic (Claude)
+skill.to_anthropic_tool()
+# → {name: "read_file", description: "...", input_schema: {...}}
+
+# OpenAI/LM Studio
+skill.to_openai_tool()
+# → {type: "function", function: {name: "read_file", ...}}
+
+# Gemini
+skill.to_gemini_function()
+# → FunctionDeclaration(name="read_file", ...)
+```
+
+3. **Tool Calling Loop** — Provider handles execution:
+```python
+while True:
+    response = llm.generate(prompt, tools=skills)
+    
+    if response.has_tool_calls:
+        for tool_call in response.tool_calls:
+            result = execute_skill(tool_call.name, **tool_call.args)
+            messages.append(result)
+        continue
+    
+    break  # Done
+```
+
+### Supported Providers
+
+| Provider | Tool Calling Method | Status |
+|----------|-------------------|--------|
+| Claude (Anthropic) | Native `tools` parameter | ✅ Implemented |
+| LM Studio | OpenAI-compatible API | ✅ Implemented |
+| OpenRouter | OpenAI-compatible API | ✅ Implemented |
+
+## Session Reports
+
+Every operation generates a session report in `bob-reports/`:
+
+```
+bob-reports/
+  session_20260517_153549_f27343a8.md
+  session_20260517_155715_2be4178f.md
+  session_history.json
+```
+
+### Report Contents
+
+```markdown
+# Elith Session Report
+
+**Session ID:** f27343a8
+**Model:** claude
+**Operation:** refactor
+**Status:** completed
+**Created:** 2026-05-17T15:35:49
+
+## Repository
+/path/to/your/project
+
+## Files Changed
+- src/cache/redis-client.ts
+- src/cache/cache-manager.ts
+
+## Output
+```
+[Full transcript of operation]
+```
+
+---
+*Generated by Elith*
+```
+
+### Session History
+
+All sessions are tracked in `session_history.json`:
+
+```json
+[
+  {
+    "session_id": "f27343a8",
+    "model": "claude",
+    "operation": "refactor",
+    "status": "completed",
+    "created_at": "2026-05-17T15:35:49",
+    "report_path": "bob-reports/session_20260517_153549_f27343a8.md",
+    "output_preview": "Analyzing current implementation..."
+  }
+]
+```
+
+## Context Engine
+
+The context engine selects the most relevant files for each operation:
+
+### Selection Strategy
+
+**For `explain` and `architect`:**
+- Key files (README.md, package.json, etc.)
+- Entry points (main.py, index.ts, app.py, etc.)
+- Max 6 files
+
+**For `test-gen`:**
+- Source files without corresponding tests
+- Max 4 files
+
+**For `refactor`:**
+- Files in target directory
+- Related files in same directory
+- Max 4 files
+
+### File Filtering
+
+Automatically skips:
+- `.git/`, `node_modules/`, `__pycache__/`
+- `venv/`, `.venv/`, `env/`
+- `dist/`, `build/`, `.next/`
+- `.pytest_cache/`, `.mypy_cache/`
+
+## Next Steps
+
+- [Getting Started](/docs/en/guides/getting-started) — Run your first operation
+- [Architecture](/docs/en/concepts/architecture) — Deep dive into system design
+- [API Reference](/docs/en/api/reference) — CLI commands and REST API

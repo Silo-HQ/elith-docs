@@ -1,0 +1,249 @@
+---
+title: "Integrations"
+description: "GitHub Actions and CI/CD integration."
+sidebarLabel: "integrations"
+annotation: "2.02"
+order: 22
+---
+
+# Integrations
+
+## GitHub Actions
+
+Run Elith in CI/CD pipelines:
+
+```yaml
+name: Elith Code Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Elith
+        run: |
+          npm install -g elith
+          pip install -r requirements.txt
+      
+      - name: Initialize Elith
+        run: elith init
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      
+      - name: Start Elith Backend
+        run: elith service start
+      
+      - name: Run Code Review
+        run: elith explain src/ > review.md
+      
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: elith-report
+          path: |
+            review.md
+            bob-reports/
+```
+
+## GitLab CI
+
+```yaml
+elith-review:
+  image: node:20
+  before_script:
+    - apt-get update && apt-get install -y python3 python3-pip
+    - npm install -g elith
+    - pip3 install -r requirements.txt
+    - elith init
+  script:
+    - elith service start
+    - elith explain src/ > review.md
+  artifacts:
+    paths:
+      - review.md
+      - bob-reports/
+  only:
+    - merge_requests
+```
+
+## Docker Integration
+
+Create a Dockerfile for Elith:
+
+```dockerfile
+FROM node:20-slim
+
+# Install Python
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Elith
+RUN npm install -g elith
+
+# Copy project
+WORKDIR /workspace
+COPY . .
+
+# Install Python dependencies
+RUN pip3 install -r requirements.txt
+
+# Initialize Elith
+RUN elith init
+
+# Start backend
+CMD ["elith", "service", "start"]
+```
+
+Build and run:
+
+```bash
+docker build -t elith-workspace .
+docker run -it \
+  -v $(pwd):/workspace \
+  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  elith-workspace \
+  elith explain src/
+```
+
+## Pre-commit Hook
+
+Add Elith to your pre-commit workflow:
+
+```bash
+# .git/hooks/pre-commit
+#!/bin/bash
+
+# Get staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.ts$\|\.js$\|\.py$')
+
+if [ -n "$STAGED_FILES" ]; then
+  echo "Running Elith review on staged files..."
+  
+  for file in $STAGED_FILES; do
+    elith explain "$file" > "bob-reports/pre-commit-$(basename $file).md"
+  done
+  
+  echo "Review complete. Check bob-reports/ for details."
+fi
+```
+
+Make it executable:
+
+```bash
+chmod +x .git/hooks/pre-commit
+```
+
+## VS Code Integration
+
+While Elith doesn't have a VS Code extension yet, you can use it via the integrated terminal:
+
+1. Open integrated terminal (`` Ctrl+` ``)
+2. Run Elith commands directly:
+   ```bash
+   elith explain src/auth/login.ts
+   ```
+
+3. View session logs in VS Code:
+   ```bash
+   code bob-reports/session_latest.md
+   ```
+
+## REST API Integration
+
+Elith exposes a REST API on `http://localhost:8000`:
+
+### Execute Operation
+
+```bash
+curl -X POST http://localhost:8000/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operation": "explain",
+    "target": "src/auth/login.ts",
+    "provider": "claude"
+  }'
+```
+
+### Stream Results
+
+```bash
+curl -N http://localhost:8000/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operation": "refactor",
+    "task": "Add error handling to auth module"
+  }'
+```
+
+### Get Session History
+
+```bash
+curl http://localhost:8000/history
+```
+
+## Webhook Integration (Planned)
+
+> **Note:** Webhook support is planned for a future release.
+
+The planned webhook feature will allow you to:
+- Receive notifications when tasks complete
+- Integrate with external systems
+- Trigger automated workflows
+
+Example planned configuration:
+
+```toml
+# Future feature - not yet implemented
+[webhooks]
+on_complete = "https://api.example.com/elith/complete"
+on_error = "https://api.example.com/elith/error"
+```
+
+## Continuous Integration Best Practices
+
+1. **Cache Dependencies**
+   ```yaml
+   - name: Cache npm
+     uses: actions/cache@v3
+     with:
+       path: ~/.npm
+       key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+   ```
+
+2. **Limit Scope**
+   - Only run Elith on changed files
+   - Use specific operations (explain, not refactor) in CI
+   - Set timeouts to prevent long-running jobs
+
+3. **Secure API Keys**
+   - Store API keys in CI secrets
+   - Never commit API keys to repository
+   - Use environment-specific keys
+
+4. **Review Reports**
+   - Upload session logs as artifacts
+   - Parse logs for actionable insights
+   - Fail builds on critical issues (future feature)
+
+## Next Steps
+
+- [API Reference](/docs/en/api/reference) — REST endpoints
+- [Troubleshooting](/docs/en/troubleshooting) — Common issues
+- [Advanced Usage](/docs/en/guides/advanced-usage) — Custom configurations

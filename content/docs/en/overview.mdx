@@ -1,0 +1,131 @@
+---
+title: "Overview"
+description: "What Elith is, what it solves, and how it works."
+sidebarLabel: "overview"
+annotation: "0.00"
+order: 0
+---
+
+# Overview
+
+Elith is a universal repo-aware AI framework that gives any LLM (Claude, GPT, Gemini, local models) the same repository skills that IBM Bob has natively. It's not a chatbot wrapper or copilot plugin—it's a skill layer that makes any AI model repo-aware.
+
+## What Elith Solves
+
+### 1. Repo-Blind Models
+
+LLMs don't know your codebase. Elith's context engine scans your repository and Obsidian vault, then builds a task packet with the 4-6 most relevant files. The model gets exactly what it needs—no more "I don't have access to that file."
+
+### 2. Generic Responses
+
+Most AI tools give context-free code snippets. Elith reads your repository structure, understands your patterns, and generates code that fits your existing architecture.
+
+### 3. Provider Lock-In
+
+Elith works with any LLM provider through a universal skill layer:
+
+- **Claude (Anthropic)** — Native tool calling
+- **LM Studio** — Local models with OpenAI-compatible API
+- **OpenRouter** — Access multiple providers through one API
+
+The skill layer normalizes tool calling across all providers, so you can switch models without changing your workflow.
+
+## How It Works
+
+Elith provides **4 core operations**:
+
+### 1. Explain
+Analyze and explain your codebase architecture in plain language.
+
+```bash
+elith explain src/auth/
+```
+
+### 2. Architect
+Propose architectural improvements specific to your codebase.
+
+```bash
+elith architect --problem "Add rate limiting to API"
+```
+
+### 3. Refactor
+Refactor code with focus on specific improvements.
+
+```bash
+elith refactor src/cache/ --focus "modernize redis client"
+```
+
+### 4. Test Generation
+Generate comprehensive test suites for your code.
+
+```bash
+elith test-gen src/auth/login.ts
+```
+
+## The 12 Skills
+
+Every operation has access to 12 repository skills:
+
+- **read_file** — Read file contents with line numbers
+- **write_file** — Write or overwrite files
+- **list_files** — List directory contents recursively
+- **search_code** — Regex search across all files
+- **git_diff** — Show uncommitted changes
+- **git_commit** — Commit changes with message
+- **run_tests** — Execute test suite
+- **find_references** — Find symbol references
+- **analyze_dependencies** — Parse dependency tree
+- **explain_function** — Extract and explain functions
+- **install_package** — Add dependencies
+- **read_logs** — Parse application logs
+
+## Context Engine
+
+The context engine solves the token limit problem:
+
+```
+Full repo (500 files, 2M tokens)
+  ↓ repo_scanner (filters .git, node_modules, etc.)
+Filtered files (200 files, 800k tokens)
+  ↓ packet_builder (selects key files + entry points)
+Task packet (4-6 files, ~8k tokens)
+  ↓ to LLM provider
+```
+
+Smart file selection based on:
+- Key files (README.md, package.json, main.py, etc.)
+- Entry points (main.py, index.ts, app.py, etc.)
+- Operation-specific heuristics
+- Files in target directory
+
+## Supported Providers
+
+<ModelTable />
+
+| Provider | Status | Model Examples |
+|----------|--------|----------------|
+| Claude (Anthropic) | ✅ Implemented | claude-sonnet-4-20250514 |
+| LM Studio (Local) | ✅ Implemented | Any local model |
+| OpenRouter | ✅ Implemented | openai/gpt-4o, meta-llama/llama-3.1-8b |
+
+## Session Logging
+
+Every operation is logged to `bob-reports/` for IBM Bob hackathon submission:
+
+```
+bob-reports/
+  session_20260517_153549_f27343a8.md
+  session_history.json
+```
+
+Each report contains:
+- Full operation transcript
+- All skill calls and results
+- Files changed
+- Timestamps
+
+## What's Next
+
+- [Quickstart](/docs/en/quickstart) — Install and run your first operation
+- [Installation](/docs/en/installation) — All install methods
+- [Configuration](/docs/en/configuration) — Set up your LLM provider

@@ -1,0 +1,267 @@
+---
+title: "Getting Started"
+description: "End-to-end walkthrough of a real Elith task."
+sidebarLabel: "getting-started"
+annotation: "2.00"
+order: 20
+---
+
+# Getting Started
+
+This guide walks through a complete Elith task from start to finish, showing the actual commands and workflow.
+
+## Prerequisites
+
+Before starting, ensure you have:
+
+1. Elith installed and initialized:
+   ```bash
+   elith init
+   ```
+
+2. At least one provider configured in `~/.elith/config.toml`:
+   ```toml
+   [providers.claude]
+   api_key = "sk-ant-..."
+   model = "claude-3-5-sonnet-20241022"
+   enabled = true
+   ```
+
+3. Backend service running:
+   ```bash
+   elith service start
+   ```
+
+## The Task
+
+We'll use Elith to explain and refactor a caching module in a Node.js application.
+
+## Step 1: Understand the Code
+
+First, let's use the `explain` operation to understand the current implementation:
+
+```bash
+elith explain src/cache/redis-client.ts
+```
+
+Elith will:
+1. Scan the repository structure
+2. Read the Obsidian vault (if configured) for project context
+3. Select 4-6 most relevant files using the context engine
+4. Send the context + file to your configured provider (Claude, LM Studio, or OpenRouter)
+5. Stream back a detailed explanation
+
+**Example output:**
+
+```
+[elith] Starting explain operation...
+[elith] Context engine: scanning repository...
+[elith] Context engine: selected 5 files (6,234 tokens)
+[elith] Provider: claude-3-5-sonnet-20241022
+
+This Redis client implementation uses the deprecated v3 API with 
+callback-based methods. Key issues:
+
+1. No connection pooling - creates new connection per request
+2. Callback-based API instead of async/await
+3. Missing error handling for connection failures
+4. No TTL management for cached entries
+5. No graceful shutdown handling
+
+The module exports three functions:
+- get(key): Retrieves value from Redis
+- set(key, value): Stores value in Redis
+- del(key): Deletes key from Redis
+
+Dependencies: redis@3.1.2 (outdated)
+```
+
+## Step 2: Generate Architecture Plan
+
+Use the `architect` operation to design improvements:
+
+```bash
+elith architect "Modernize the Redis caching layer"
+```
+
+**Example output:**
+
+```
+[elith] Starting architect operation...
+[elith] Context engine: selected 6 files (7,842 tokens)
+[elith] Provider: claude-3-5-sonnet-20241022
+
+## Architecture Plan: Redis Caching Modernization
+
+### Current State
+- redis@3.1.2 with callback API
+- No connection pooling
+- No error handling strategy
+
+### Proposed Changes
+
+1. **Upgrade Dependencies**
+   - redis@3.1.2 → redis@4.6.0
+   - Add @types/redis for TypeScript support
+
+2. **Add Connection Pool**
+   - Create ConnectionPool class
+   - Min: 2 connections, Max: 10 connections
+   - Idle timeout: 30 seconds
+
+3. **Modernize API**
+   - Replace callbacks with async/await
+   - Add proper TypeScript types
+   - Implement error handling
+
+4. **Add Features**
+   - TTL management
+   - Graceful shutdown
+   - Health checks
+
+### Files to Modify
+- src/cache/redis-client.ts (refactor)
+- src/config/redis.config.ts (add pool config)
+- package.json (update dependencies)
+
+### Files to Create
+- src/cache/connection-pool.ts (new)
+- src/cache/types.ts (new)
+
+### Testing Strategy
+- Unit tests for ConnectionPool
+- Integration tests for redis-client
+- Load tests for connection pooling
+```
+
+## Step 3: Implement Changes
+
+Use the `refactor` operation to make the changes:
+
+```bash
+elith refactor "Upgrade Redis client to v4 with connection pooling"
+```
+
+Elith will:
+1. Analyze the current code
+2. Generate refactored code using the configured provider
+3. Use skills to modify files:
+   - `write_file` to create new files
+   - `read_file` to check existing code
+   - `search_code` to find all Redis usage
+4. Log all changes to `bob-reports/session_TIMESTAMP.md`
+
+**Example output:**
+
+```
+[elith] Starting refactor operation...
+[elith] Context engine: selected 6 files (8,123 tokens)
+[elith] Provider: claude-3-5-sonnet-20241022
+
+Analyzing current implementation...
+
+Changes to make:
+1. Create src/cache/connection-pool.ts
+2. Update src/cache/redis-client.ts
+3. Update src/config/redis.config.ts
+4. Update package.json dependencies
+
+[skill: write_file] Creating src/cache/connection-pool.ts... ✓
+[skill: write_file] Updating src/cache/redis-client.ts... ✓
+[skill: write_file] Updating src/config/redis.config.ts... ✓
+[skill: read_file] Reading package.json... ✓
+[skill: write_file] Updating package.json... ✓
+
+Refactoring complete. 4 files modified.
+Session log: bob-reports/session_20260518_123045.md
+```
+
+## Step 4: Generate Tests
+
+Use the `test-gen` operation to create tests:
+
+```bash
+elith test-gen src/cache/connection-pool.ts
+```
+
+**Example output:**
+
+```
+[elith] Starting test-gen operation...
+[elith] Context engine: selected 4 files (5,234 tokens)
+[elith] Provider: claude-3-5-sonnet-20241022
+
+[skill: write_file] Creating tests/cache/connection-pool.test.ts... ✓
+
+Generated test suite with:
+- 12 unit tests
+- 3 integration tests
+- Edge case coverage
+- Mock Redis server setup
+
+Run tests with: npm test
+```
+
+## Step 5: Review Changes
+
+Check what was modified:
+
+```bash
+git diff
+```
+
+Review the session log for detailed changes:
+
+```bash
+cat bob-reports/session_20260518_123045.md
+```
+
+The session log contains:
+- Full conversation with the LLM
+- All skill calls made
+- Files read and written
+- Timestamps for each action
+
+## Step 6: Run Tests
+
+```bash
+npm install  # Install updated dependencies
+npm test     # Run the generated tests
+```
+
+## Step 7: Commit
+
+```bash
+git add .
+git commit -m "Modernize Redis caching layer
+
+- Upgrade to redis v4 API
+- Add connection pooling
+- Improve error handling
+- Add comprehensive tests
+
+Generated with Elith"
+```
+
+## Understanding the Workflow
+
+Elith's workflow is:
+
+1. **Context Engine** selects 4-6 relevant files from your repo
+2. **Operation** builds a specialized prompt (explain/architect/refactor/test-gen)
+3. **Provider** (Claude/LM Studio/OpenRouter) processes the request
+4. **Skills** execute actions (read_file, write_file, search_code, etc.)
+5. **Session Logger** records everything to `bob-reports/`
+
+## Available Operations
+
+- `elith explain <file>` - Understand code
+- `elith architect <task>` - Design solutions
+- `elith refactor <task>` - Implement changes
+- `elith test-gen <file>` - Generate tests
+
+## Next Steps
+
+- [Advanced Usage](/docs/en/guides/advanced-usage) — Custom configurations
+- [API Reference](/docs/en/api/reference) — CLI commands and REST API
+- [Core Concepts](/docs/en/concepts/core-concepts) — Understanding skills and providers

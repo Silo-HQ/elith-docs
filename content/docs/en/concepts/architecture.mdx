@@ -1,0 +1,273 @@
+---
+title: "Architecture"
+description: "How Elith's operation-based architecture works."
+sidebarLabel: "architecture"
+annotation: "1.00"
+order: 10
+---
+
+# Architecture
+
+Elith is a universal skill layer that makes any LLM repo-aware through a provider-agnostic architecture.
+
+## System Overview
+
+```
+User Request
+    ↓
+CLI / API
+    ↓
+Operation Selection (explain, architect, refactor, test-gen)
+    ↓
+Context Engine (scan repo, select 4-6 files)
+    ↓
+Provider Router (Claude, LM Studio, OpenRouter)
+    ↓
+LLM with 12 Skills (via tool calling)
+    ↓
+Session Logger (bob-reports/)
+```
+
+## Core Components
+
+### 1. Operations
+
+Elith provides 4 core operations, each with a specialized prompt:
+
+**Explain** ([`explain.py`](https://github.com/Silo-HQ/elith/blob/main/backend/operations/explain.py))
+- Analyzes codebase architecture
+- Explains structure and components
+- Identifies key patterns
+
+**Architect** ([`architect.py`](https://github.com/Silo-HQ/elith/blob/main/backend/operations/architect.py))
+- Proposes architectural improvements
+- Focuses on repo-specific solutions
+- Avoids generic textbook answers
+
+**Refactor** ([`refactor.py`](https://github.com/Silo-HQ/elith/blob/main/backend/operations/refactor.py))
+- Improves code quality
+- Targets specific files or directories
+- Supports focus areas (e.g., "modernize redis client")
+
+**Test Generation** ([`test_gen.py`](https://github.com/Silo-HQ/elith/blob/main/backend/operations/test_gen.py))
+- Generates comprehensive test suites
+- Matches existing test framework
+- Covers happy path, edge cases, and errors
+
+### 2. Context Engine
+
+The context engine solves the token limit problem through smart file selection:
+
+**Repo Scanner** ([`repo_scanner.py`](https://github.com/Silo-HQ/elith/blob/main/backend/context_engine/repo_scanner.py))
+```python
+SKIP_DIRS = {
+    '.git', 'node_modules', '__pycache__', 
+    'venv', '.venv', 'env', 'dist', 'build'
+}
+
+KEY_FILES = {
+    'README.md', 'package.json', 'pyproject.toml',
+    'main.py', 'app.py', 'index.js', 'index.ts'
+}
+```
+
+**Vault Reader** ([`vault_reader.py`](https://github.com/Silo-HQ/elith/blob/main/backend/context_engine/vault_reader.py))
+- Reads Obsidian markdown notes
+- Extracts hashtags for relevance
+- Provides project context
+
+**Packet Builder** ([`packet_builder.py`](https://github.com/Silo-HQ/elith/blob/main/backend/context_engine/packet_builder.py))
+- Selects 4-6 most relevant files
+- Operation-specific heuristics:
+  - `explain`: Key files + entry points
+  - `test-gen`: Source files without tests
+  - `refactor`: Files in target directory
+  - `architect`: Key files + entry points
+
+### 3. Provider Layer
+
+**Base Provider** ([`base_provider.py`](https://github.com/Silo-HQ/elith/blob/main/backend/providers/base_provider.py))
+```python
+class BaseProvider(ABC):
+    def __init__(self, repo_path: str, skills: List[BaseSkill])
+    def run(self, prompt: str, context: str) -> Generator[str, None, None]
+    def execute_skill(self, skill_name: str, **kwargs) -> str
+```
+
+**Implemented Providers:**
+
+1. **Claude Provider** ([`claude_provider.py`](https://github.com/Silo-HQ/elith/blob/main/backend/providers/claude_provider.py))
+   - Uses Anthropic's native tool calling
+   - Tool calling loop: send → stream → execute tools → continue
+   - Model: `claude-sonnet-4-20250514`
+
+2. **LM Studio Provider** ([`lmstudio_provider.py`](https://github.com/Silo-HQ/elith/blob/main/backend/providers/lmstudio_provider.py))
+   - OpenAI-compatible API
+   - Runs local models
+   - Default endpoint: `http://localhost:1234/v1`
+
+3. **OpenRouter Provider** ([`openrouter_provider.py`](https://github.com/Silo-HQ/elith/blob/main/backend/providers/openrouter_provider.py))
+   - Access multiple providers through one API
+   - Supports GPT-4, Claude, Llama, Gemini, etc.
+
+### 4. Skill Layer
+
+All providers expose the same 12 skills via tool calling:
+
+**File Operations:**
+- `read_file` — Read file with line numbers
+- `write_file` — Write/overwrite files (auto-creates directories)
+- `list_files` — List directory contents (recursive option)
+
+**Code Search:**
+- `search_code` — Regex search across files
+- `find_references` — Find symbol references
+
+**Git Operations:**
+- `git_diff` — Show uncommitted changes
+- `git_commit` — Commit with message
+
+**Analysis:**
+- `analyze_dependencies` — Parse package files
+- `explain_function` — Extract function source (Python AST)
+
+**Execution:**
+- `run_tests` — Execute test suite (auto-detects pytest/npm)
+- `install_package` — Add dependencies (pip/npm)
+- `read_logs` — Parse log files
+
+**Skill Format Conversion:**
+```python
+# BaseSkill provides conversion methods
+skill.to_anthropic_tool()  # → {name, description, input_schema}
+skill.to_openai_tool()     # → {type: "function", function: {...}}
+skill.to_gemini_function() # → FunctionDeclaration(...)
+```
+
+### 5. Session Management
+
+**Session Manager** ([`manager.py`](https://github.com/Silo-HQ/elith/blob/main/backend/session/manager.py))
+- Tracks active sessions
+- Manages output queues for SSE streaming
+- Updates session status
+
+**Session Logger** ([`logger.py`](https://github.com/Silo-HQ/elith/blob/main/backend/session/logger.py))
+- Logs to `bob-reports/session_TIMESTAMP_ID.md`
+- Markdown format for IBM Bob hackathon
+- Contains full transcript, tool calls, timestamps
+
+**Session History** ([`history.py`](https://github.com/Silo-HQ/elith/blob/main/backend/session/history.py))
+- Persists to `bob-reports/session_history.json`
+- Keeps last 100 sessions
+- Searchable by model, operation, status
+
+## Request Flow
+
+### 1. CLI Request
+
+```bash
+elith refactor src/cache/ --focus "modernize redis"
+```
+
+### 2. Operation Selection
+
+CLI maps command to operation:
+```python
+operation = "refactor"
+target = "src/cache/"
+focus = "modernize redis"
+```
+
+### 3. Context Building
+
+```python
+# Scan repository
+scanner = RepoScanner(repo_path)
+files = scanner.scan()  # Returns FileInfo objects
+
+# Build task packet
+packet = TaskPacket(
+    repo_path=repo_path,
+    files=files,
+    vault_notes=vault_reader.read_notes(),
+    total_files=len(files)
+)
+
+# Select relevant files
+builder = PacketBuilder(packet)
+context_data = builder.build_context("refactor", "src/cache/")
+# Returns: {selected_files: [...], context: "...", files_loaded: 4}
+```
+
+### 4. Provider Execution
+
+```python
+# Get operation prompt
+prompt = refactor.build_refactor_prompt(context_data['context'])
+
+# Route to provider
+for chunk in provider.run(prompt, context_data['context']):
+    yield chunk  # Stream to client
+```
+
+### 5. Tool Calling Loop
+
+```python
+# Inside provider.run()
+while True:
+    response = client.messages.create(
+        model=self.model,
+        tools=[skill.to_anthropic_tool() for skill in skills],
+        messages=messages
+    )
+    
+    # Yield text
+    for block in response.content:
+        if block.type == "text":
+            yield block.text
+    
+    # Execute tools
+    if response.stop_reason == "tool_use":
+        for tool_use in response.content:
+            result = execute_skill(tool_use.name, **tool_use.input)
+            messages.append({"role": "user", "content": result})
+        continue  # Loop back
+    
+    break  # Done
+```
+
+## API Architecture
+
+**FastAPI Backend** ([`main.py`](https://github.com/Silo-HQ/elith/blob/main/backend/main.py))
+- Runs on `http://localhost:8000`
+- CORS enabled for frontend
+- Auto-starts via service manager
+
+**Routes:**
+- `POST /api/scan` — Scan repository
+- `POST /api/execute` — Start operation
+- `GET /api/stream/{session_id}` — SSE stream
+- `GET /api/models` — List providers
+- `GET /api/tasks` — List operations
+- `GET /api/status` — Backend status
+
+**SSE Streaming:**
+```javascript
+// Event types
+{type: "output", content: "...", model: "claude"}
+{type: "done", status: "completed", model: "claude"}
+```
+
+## Service Management
+
+**Service Manager** ([`service_manager.py`](https://github.com/Silo-HQ/elith/blob/main/backend/utils/service_manager.py))
+- Auto-starts backend when CLI runs
+- Manages uvicorn process
+- Tracks PID in `~/.elith/backend.pid`
+- Logs to `~/.elith/backend.log`
+- Backend persists after CLI exits
+
+## Next Steps
+
+- [Core Concepts](/docs/en/concepts/core-concepts) — Operations and skills
+- [API Reference](/docs/en/api/reference) — REST endpoints and CLI

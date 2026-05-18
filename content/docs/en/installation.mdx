@@ -1,0 +1,244 @@
+---
+title: "Installation"
+description: "Install Elith on macOS, Linux, or Windows."
+sidebarLabel: "installation"
+annotation: "0.02"
+order: 2
+---
+
+# Installation
+
+Elith supports five installation methods. Choose the one that fits your workflow.
+
+## System Requirements
+
+- **Python** 3.10 or higher
+- **Node.js** 18 or higher (optional, for TUI features)
+- **Operating System** macOS, Linux, or Windows (WSL2)
+- **Git** 2.30 or higher
+
+## Install Methods
+
+<Tabs>
+  <Tab label="curl">
+    ```bash
+    curl -fsSL https://elith.silohq.tech/install.sh | sh
+    ```
+    
+    This script:
+    - Checks Python 3.10+ and Node.js
+    - Clones repository to `~/.elith/repo`
+    - Creates Python virtual environment
+    - Installs dependencies
+    - Creates `elith` wrapper script in `~/.local/bin`
+    - Adds to PATH if needed
+  </Tab>
+  
+  <Tab label="npm">
+    ```bash
+    npm install -g @elith/cli
+    ```
+    
+    The npm package wraps the Python backend and handles installation automatically.
+    Requires Node.js 18+ and Python 3.10+.
+  </Tab>
+  
+  <Tab label="pnpm">
+    ```bash
+    pnpm add -g @elith/cli
+    ```
+    
+    Faster than npm, uses hard links. Same requirements as npm.
+  </Tab>
+  
+  <Tab label="bun">
+    ```bash
+    bun add -g @elith/cli
+    ```
+    
+    Fastest option. Requires Bun 1.0+ and Python 3.10+.
+  </Tab>
+  
+  <Tab label="brew">
+    ```bash
+    brew install elith
+    ```
+    
+    Installs via Homebrew (macOS and Linux). Automatically manages Python dependencies.
+    
+    **Note:** Homebrew formula is in development. Use curl install for now.
+  </Tab>
+</Tabs>
+
+## Verify Installation
+
+```bash
+elith --version
+```
+
+Expected output:
+
+```
+elith v0.1.0
+```
+
+## PATH Setup
+
+If `elith` is not found, add `~/.local/bin` to your PATH:
+
+### Bash
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Zsh
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+### Fish
+
+```bash
+set -Ua fish_user_paths $HOME/.local/bin
+```
+
+## Service Management
+
+Elith runs a FastAPI backend that auto-starts when needed. Manage it with:
+
+```bash
+# Check backend status
+elith service status
+
+# Start backend manually
+elith service start
+
+# Stop backend
+elith service stop
+
+# Restart backend
+elith service restart
+```
+
+The backend runs on `http://localhost:8000` and persists between sessions.
+
+### Service Status Output
+
+```bash
+$ elith service status
+✓ Backend is running
+  Port: 8000
+  PID: 12345
+  Logs: ~/.elith/backend.log
+```
+
+### View Logs
+
+```bash
+tail -f ~/.elith/backend.log
+```
+
+## Configuration
+
+On first run, Elith will guide you through provider setup:
+
+```bash
+elith
+```
+
+Or manually configure:
+
+```bash
+elith init
+```
+
+Configuration is saved to `~/.elith/config.toml`.
+
+## Uninstall
+
+<Callout type="warning">
+This will remove Elith and all configuration files.
+</Callout>
+
+```bash
+# npm/pnpm/bun
+npm uninstall -g @elith/cli
+
+# Homebrew
+brew uninstall elith
+
+# curl install
+rm -rf ~/.elith
+rm ~/.local/bin/elith
+```
+
+## Troubleshooting
+
+### Port 8000 Already in Use
+
+```bash
+# Find the process using port 8000
+lsof -i :8000
+
+# Kill it
+kill -9 <PID>
+
+# Restart Elith
+elith service restart
+```
+
+### Permission Denied
+
+```bash
+# Make the binary executable
+chmod +x ~/.local/bin/elith
+
+# Or install with sudo (npm)
+sudo npm install -g @elith/cli
+```
+
+### Python Not Found
+
+Elith requires Python 3.10+. Install it:
+
+```bash
+# macOS
+brew install python@3.10
+
+# Ubuntu/Debian
+sudo apt install python3.10 python3.10-venv
+
+# Fedora
+sudo dnf install python3.10
+```
+
+### Backend Won't Start
+
+Check the logs:
+
+```bash
+cat ~/.elith/backend.log
+```
+
+Common issues:
+- Port 8000 in use (see above)
+- Missing Python dependencies: `cd ~/.elith/repo && pip install -r requirements.txt`
+- Python version too old: `python3 --version` (need 3.10+)
+
+## Installation Locations
+
+- **Config:** `~/.elith/config.toml`
+- **Repository:** `~/.elith/repo/`
+- **Virtual Environment:** `~/.elith/venv/`
+- **Backend Logs:** `~/.elith/backend.log`
+- **Backend PID:** `~/.elith/backend.pid`
+- **Session Reports:** `<your-project>/bob-reports/`
+
+## Next Steps
+
+- [Configuration](/docs/en/configuration) — Set up your LLM provider
+- [Quickstart](/docs/en/quickstart) — Run your first operation

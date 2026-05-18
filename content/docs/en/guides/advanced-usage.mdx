@@ -1,0 +1,243 @@
+---
+title: "Advanced Usage"
+description: "Provider configuration, context engine tuning, and local LLMs."
+sidebarLabel: "advanced-usage"
+annotation: "2.01"
+order: 21
+---
+
+# Advanced Usage
+
+## Multiple Provider Configuration
+
+Configure multiple providers and switch between them:
+
+```toml
+# ~/.elith/config.toml
+
+[providers.claude]
+api_key = "sk-ant-..."
+model = "claude-3-5-sonnet-20241022"
+enabled = true
+
+[providers.lmstudio]
+base_url = "http://localhost:1234/v1"
+model = "local-model"
+enabled = true
+
+[providers.openrouter]
+api_key = "sk-or-..."
+model = "anthropic/claude-3.5-sonnet"
+enabled = false
+```
+
+Switch providers by enabling/disabling them in the config file.
+
+## Context Engine Tuning
+
+The context engine selects 4-6 files per task. You can influence selection by:
+
+### 1. Obsidian Vault Integration
+
+Create an Obsidian vault in your project to provide context:
+
+```
+your-project/
+├── .obsidian/
+├── docs/
+│   ├── architecture/
+│   │   └── system-design.md
+│   ├── standards/
+│   │   └── coding-standards.md
+│   └── tasks/
+│       └── current-sprint.md
+```
+
+The context engine reads these markdown files to understand:
+- Project architecture
+- Coding standards
+- Current priorities
+- Technical decisions
+
+### 2. File Naming Conventions
+
+The context engine prioritizes files with relevant names:
+- `README.md`, `ARCHITECTURE.md` - High priority
+- Files matching the task keywords
+- Recently modified files
+- Test files related to the target
+
+### 3. Repository Structure
+
+Organize code logically:
+```
+src/
+├── auth/          # Authentication module
+├── cache/         # Caching layer
+├── api/           # API routes
+└── utils/         # Utilities
+```
+
+Clear structure helps the context engine select relevant files.
+
+## Using Local LLMs
+
+### LM Studio
+
+1. Download and install [LM Studio](https://lmstudio.ai/)
+2. Load a model (e.g., CodeLlama, DeepSeek Coder)
+3. Start the local server (default: `http://localhost:1234`)
+4. Configure Elith:
+
+```toml
+[providers.lmstudio]
+base_url = "http://localhost:1234/v1"
+model = "local-model"  # Use the model name from LM Studio
+enabled = true
+```
+
+5. Use Elith normally:
+```bash
+elith explain src/auth/login.ts
+```
+
+### Recommended Local Models
+
+For code tasks:
+- **DeepSeek Coder 33B** - Best for code generation
+- **CodeLlama 34B** - Good for explanations
+- **Phind CodeLlama 34B** - Optimized for coding
+
+For general tasks:
+- **Mistral 7B** - Fast, good quality
+- **Llama 2 13B** - Balanced performance
+
+## Session Management
+
+### View Session History
+
+```bash
+# List all sessions
+ls -la bob-reports/
+
+# View a specific session
+cat bob-reports/session_20260518_123045_abc123.md
+```
+
+### Session Log Format
+
+Each session log contains:
+```markdown
+# Elith Session Report
+
+**Session ID:** abc123
+**Started:** 2026-05-18T12:30:45Z
+**Operation:** refactor
+**Provider:** claude-3-5-sonnet-20241022
+
+## Context
+- Files analyzed: 6
+- Total tokens: 8,234
+
+## Conversation
+[Full LLM conversation transcript]
+
+## Skills Used
+1. read_file: src/cache/redis-client.ts
+2. write_file: src/cache/connection-pool.ts
+3. search_code: pattern="redis.createClient"
+
+## Results
+- Files modified: 4
+- Lines added: 127
+- Lines removed: 89
+```
+
+## Service Management
+
+### Start/Stop Backend
+
+```bash
+# Start backend (auto-starts on first CLI use)
+elith service start
+
+# Check status
+elith service status
+
+# Restart backend
+elith service restart
+
+# Stop backend
+elith service stop
+```
+
+### Backend Configuration
+
+The backend runs on `http://localhost:8000` by default. It:
+- Auto-starts when you run any `elith` command
+- Runs in the background
+- Logs to `~/.elith/logs/`
+- Can be managed via `elith service` commands
+
+## Environment Variables
+
+Override config with environment variables:
+
+```bash
+# Use a different provider for one command
+ANTHROPIC_API_KEY=sk-ant-... elith explain src/app.ts
+
+# Use a different model
+ANTHROPIC_MODEL=claude-3-opus-20240229 elith architect "Design new feature"
+
+# Use OpenRouter
+OPENROUTER_API_KEY=sk-or-... elith refactor "Optimize database queries"
+```
+
+## Debugging
+
+### Enable Verbose Logging
+
+```bash
+# Set log level in config
+[logging]
+level = "DEBUG"
+```
+
+### Check Backend Logs
+
+```bash
+tail -f ~/.elith/logs/backend.log
+```
+
+### Test Provider Connection
+
+```bash
+# Test if provider is working
+elith explain --test
+```
+
+## Performance Tips
+
+1. **Keep Obsidian vault concise** - Only include essential docs
+2. **Use specific file paths** - `elith explain src/auth/login.ts` is faster than `elith explain src/`
+3. **Local LLMs** - Faster for small tasks, no API costs
+4. **Session cleanup** - Periodically clean old sessions from `bob-reports/`
+
+## Limitations
+
+Current limitations (as of v0.1.0):
+
+- No parallel agent execution (single provider per task)
+- No approval gates (all changes are made immediately)
+- No webhooks or callbacks
+- No spend limits or token tracking
+- Context engine uses simple heuristics (not ML-based)
+
+These features are planned for future releases.
+
+## Next Steps
+
+- [Integrations](/docs/en/guides/integrations) — CI/CD integration
+- [API Reference](/docs/en/api/reference) — REST endpoints
+- [Troubleshooting](/docs/en/troubleshooting) — Common issues

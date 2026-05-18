@@ -1,0 +1,435 @@
+---
+title: "Troubleshooting"
+description: "Common errors and how to fix them."
+sidebarLabel: "troubleshooting"
+annotation: "4.00"
+order: 40
+---
+
+# Troubleshooting
+
+## Authentication Errors
+
+### Error: Invalid API key
+
+```
+[error] Authentication failed: Invalid API key
+```
+
+**Cause:** API key is incorrect or expired
+
+**Fix:**
+```bash
+# Re-initialize configuration
+elith init
+
+# Or manually edit config
+nano ~/.elith/config.toml
+```
+
+### Error: Rate limit exceeded
+
+```
+[error] Rate limit exceeded: 429 Too Many Requests
+```
+
+**Cause:** Too many requests to provider API
+
+**Fix:** Wait 60 seconds and try again, or upgrade your API plan
+
+## Backend Errors
+
+### Error: Port 8000 already in use
+
+```
+[error] Failed to start backend: Port 8000 already in use
+```
+
+**Cause:** Another process is using port 8000
+
+**Fix:**
+```bash
+# Find the process
+lsof -i :8000
+
+# Kill it
+kill -9 <PID>
+
+# Restart Elith
+elith service restart
+```
+
+### Error: Backend not responding
+
+```
+[error] Backend not responding: Connection refused
+```
+
+**Cause:** Backend daemon is not running
+
+**Fix:**
+```bash
+elith service start
+```
+
+### Error: Backend won't start
+
+```
+[error] Failed to start backend service
+```
+
+**Cause:** Missing dependencies or configuration issues
+
+**Fix:**
+```bash
+# Check Python installation
+python3 --version  # Should be 3.10+
+
+# Reinstall dependencies
+pip install -r requirements.txt
+
+# Check logs
+cat ~/.elith/logs/backend.log
+
+# Try starting manually
+python3 backend/main.py
+```
+
+## Configuration Errors
+
+### Error: Config file not found
+
+```
+[error] Configuration file not found: ~/.elith/config.toml
+```
+
+**Cause:** Elith not initialized
+
+**Fix:**
+```bash
+elith init
+```
+
+### Error: Invalid TOML syntax
+
+```
+[error] Failed to parse config: Invalid TOML syntax
+```
+
+**Cause:** Syntax error in config file
+
+**Fix:**
+```bash
+# Check config syntax
+cat ~/.elith/config.toml
+
+# Common issues:
+# - Missing quotes around strings
+# - Incorrect section headers
+# - Trailing commas
+
+# Example correct format:
+[providers.claude]
+api_key = "sk-ant-..."
+model = "claude-3-5-sonnet-20241022"
+enabled = true
+```
+
+## Repository Errors
+
+### Error: Repo scan timeout
+
+```
+[error] Repository scan timeout: exceeded 60s
+```
+
+**Cause:** Repository is too large (>10k files)
+
+**Fix:** The context engine will still work, but may take longer. Consider:
+- Running operations on specific files instead of directories
+- Cleaning up unused files
+- Using `.gitignore` to exclude build artifacts
+
+### Error: No files found
+
+```
+[error] No files found in repository
+```
+
+**Cause:** Empty directory or all files ignored
+
+**Fix:** 
+```bash
+# Check if directory has files
+ls -la
+
+# Check git status
+git status
+```
+
+## Operation Errors
+
+### Error: Operation failed
+
+```
+[error] Operation failed: <operation> encountered an error
+```
+
+**Cause:** Various reasons (provider error, file access, etc.)
+
+**Fix:**
+```bash
+# Check session log for details
+cat bob-reports/session_latest.md
+
+# Try with a different provider
+# Edit ~/.elith/config.toml to enable another provider
+
+# Try a simpler operation first
+elith explain README.md
+```
+
+### Error: File not found
+
+```
+[error] File not found: src/nonexistent.ts
+```
+
+**Cause:** Target file doesn't exist
+
+**Fix:**
+```bash
+# Check file path
+ls -la src/
+
+# Use correct relative path from repo root
+elith explain src/actual-file.ts
+```
+
+## Provider-Specific Errors
+
+### Claude: Context length exceeded
+
+```
+[error] Context length exceeded: 200000 tokens
+```
+
+**Cause:** Selected files are too large
+
+**Fix:**
+- Target specific files instead of entire directories
+- Use smaller files
+- The context engine should prevent this, but may need tuning
+
+### LM Studio: Connection refused
+
+```
+[error] Connection refused: http://localhost:1234
+```
+
+**Cause:** LM Studio server not running
+
+**Fix:**
+```bash
+# 1. Open LM Studio
+# 2. Load a model
+# 3. Start the local server
+# 4. Verify it's running:
+curl http://localhost:1234/v1/models
+```
+
+### OpenRouter: Model not found
+
+```
+[error] Model not found: invalid/model-name
+```
+
+**Cause:** Invalid model name in config
+
+**Fix:**
+```toml
+# Use correct model names from OpenRouter
+[providers.openrouter]
+model = "anthropic/claude-3.5-sonnet"  # Correct format
+```
+
+## Installation Errors
+
+### Error: Permission denied
+
+```
+[error] Permission denied: /usr/local/bin/elith
+```
+
+**Fix:**
+```bash
+# Use sudo for global install
+sudo npm install -g elith
+
+# Or install locally
+npm install elith
+npx elith init
+```
+
+### Error: Python not found
+
+```
+[error] Python 3.10+ required but not found
+```
+
+**Fix:**
+```bash
+# macOS
+brew install python@3.11
+
+# Ubuntu/Debian
+sudo apt install python3.11
+
+# Fedora
+sudo dnf install python3.11
+
+# Verify installation
+python3 --version
+```
+
+### Error: Module not found
+
+```
+[error] ModuleNotFoundError: No module named 'fastapi'
+```
+
+**Cause:** Python dependencies not installed
+
+**Fix:**
+```bash
+pip install -r requirements.txt
+
+# Or install specific package
+pip install fastapi uvicorn
+```
+
+## Session Log Errors
+
+### Error: Cannot write to bob-reports/
+
+```
+[error] Permission denied: bob-reports/
+```
+
+**Cause:** No write permission in current directory
+
+**Fix:**
+```bash
+# Create directory with correct permissions
+mkdir -p bob-reports
+chmod 755 bob-reports
+
+# Or run from a directory where you have write access
+cd ~/projects/my-project
+elith explain src/
+```
+
+## Performance Issues
+
+### Slow response times
+
+**Cause:** Large context, slow provider, or network issues
+
+**Fix:**
+- Use specific file paths instead of directories
+- Try a faster model (e.g., claude-3-haiku)
+- Use local LLM for faster response (but lower quality)
+- Check network connection
+
+### High memory usage
+
+**Cause:** Large repository or many concurrent operations
+
+**Fix:**
+- Close other applications
+- Target specific files
+- Restart backend: `elith service restart`
+
+## Debugging
+
+### Enable verbose logging
+
+```toml
+# ~/.elith/config.toml
+[logging]
+level = "DEBUG"
+```
+
+### Check backend logs
+
+```bash
+# View live logs
+tail -f ~/.elith/logs/backend.log
+
+# View all logs
+cat ~/.elith/logs/backend.log
+```
+
+### Check session logs
+
+```bash
+# List all sessions
+ls -la bob-reports/
+
+# View latest session
+cat bob-reports/session_latest.md
+
+# View session history
+cat bob-reports/session_history.json
+```
+
+### Test provider connection
+
+```bash
+# Test with a simple operation
+elith explain README.md
+
+# Check if backend is running
+curl http://localhost:8000/models
+```
+
+## Still Having Issues?
+
+1. **Check the logs:**
+   ```bash
+   cat ~/.elith/logs/backend.log
+   cat bob-reports/session_latest.md
+   ```
+
+2. **Verify installation:**
+   ```bash
+   which elith
+   python3 --version
+   pip list | grep fastapi
+   ```
+
+3. **Try a clean reinstall:**
+   ```bash
+   npm uninstall -g elith
+   rm -rf ~/.elith
+   npm install -g elith
+   elith init
+   ```
+
+4. **Open an issue on GitHub:**
+   https://github.com/Silo-HQ/elith/issues
+   
+   Include:
+   - Error message
+   - Backend logs
+   - Session logs
+   - OS and Python version
+   - Steps to reproduce
+
+## Common Gotchas
+
+- **Config format:** Elith uses TOML, not JSON
+- **Service auto-start:** Backend auto-starts on first operation
+- **Single provider:** Only one provider can be enabled at a time
+- **Relative paths:** All file paths are relative to repo root
+- **Session logs:** Check `bob-reports/` for detailed operation logs

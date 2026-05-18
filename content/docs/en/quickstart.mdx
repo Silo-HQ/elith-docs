@@ -1,0 +1,212 @@
+---
+title: "Quickstart"
+description: "Get Elith running in under 5 minutes."
+sidebarLabel: "quickstart"
+annotation: "0.01"
+order: 1
+---
+
+# Quickstart
+
+Get Elith running in under 5 minutes.
+
+## Install
+
+Choose your preferred method:
+
+<Tabs>
+  <Tab label="curl">
+    ```bash
+    curl -fsSL https://elith.silohq.tech/install.sh | sh
+    ```
+  </Tab>
+  <Tab label="npm">
+    ```bash
+    npm install -g @elith/cli
+    ```
+  </Tab>
+  <Tab label="pnpm">
+    ```bash
+    pnpm add -g @elith/cli
+    ```
+  </Tab>
+  <Tab label="bun">
+    ```bash
+    bun add -g @elith/cli
+    ```
+  </Tab>
+  <Tab label="brew">
+    ```bash
+    brew install elith
+    ```
+  </Tab>
+</Tabs>
+
+## Configure Provider
+
+On first run, Elith will guide you through setup:
+
+```bash
+elith
+```
+
+You'll see an interactive wizard:
+
+```
+  _____ _ _ _   _     
+ | ____| (_) |_| |__  
+ |  _| | | | __| '_ \ 
+ | |___| | | |_| | | |
+ |_____|_|_|\__|_| |_|
+
+Elith Configuration Wizard
+Let's set up your AI providers
+
+Available providers:
+→ Claude (Anthropic)
+  Cloud-based, most capable
+  
+  LM Studio (Local)
+  Run models locally, privacy-focused
+  
+  OpenRouter (Multiple models)
+  Access to multiple providers
+
+Use ↑/↓ arrow keys to navigate, Enter to select
+```
+
+After selecting a provider, enter your API key (or endpoint for local models):
+
+```
+Claude (Anthropic) Configuration
+Enter your Anthropic API key: sk-ant-...
+Model name [claude-sonnet-4-20250514]: 
+
+✓ Configuration complete!
+Starting Elith...
+```
+
+The backend will auto-start on `http://localhost:8000`.
+
+## Run Your First Operation
+
+### Explain Your Codebase
+
+```bash
+elith explain
+```
+
+Output:
+
+```
+[cyan]Scanning repository: /path/to/your/project[/cyan]
+[green]✓ Found 47 files[/green]
+
+[Elith Skill: list_files({"path": ".", "recursive": true})]
+→ Contents of .:
+📁 src
+📁 tests
+📄 package.json
+...
+
+[cyan]Thinking...[/cyan]
+
+This is a Node.js application with the following structure:
+
+**Overall Architecture:**
+The project follows a standard MVC pattern with...
+
+**Key Components:**
+1. src/auth/ - Authentication module handling...
+2. src/api/ - REST API endpoints...
+...
+```
+
+### Refactor Code
+
+```bash
+elith refactor src/cache/redis-client.ts --focus "modernize to redis v4"
+```
+
+### Generate Tests
+
+```bash
+elith test-gen src/auth/login.ts
+```
+
+### Design Architecture
+
+```bash
+elith architect --problem "Add rate limiting to API endpoints"
+```
+
+## What Just Happened?
+
+1. **Context Engine** scanned your repo and selected relevant files
+2. **Provider** (Claude/LM Studio/OpenRouter) received the context
+3. **Skills** were called automatically via tool calling
+4. **Output** streamed in real-time
+5. **Session** logged to `bob-reports/session_TIMESTAMP.md`
+
+## Check the Backend
+
+The backend auto-started. Check its status:
+
+```bash
+elith service status
+```
+
+Output:
+
+```
+✓ Backend is running
+  Port: 8000
+  PID: 12345
+  Logs: ~/.elith/backend.log
+```
+
+## View Session History
+
+All operations are logged:
+
+```bash
+ls bob-reports/
+```
+
+Output:
+
+```
+session_20260517_153549_f27343a8.md
+session_20260517_155715_2be4178f.md
+session_history.json
+```
+
+## Service Management
+
+```bash
+# Start backend manually
+elith service start
+
+# Stop backend
+elith service stop
+
+# Restart backend
+elith service restart
+
+# View logs
+tail -f ~/.elith/backend.log
+```
+
+## Reconfigure Provider
+
+To change providers or update API keys:
+
+```bash
+elith init
+```
+
+## Next Steps
+
+- [Installation](/docs/en/installation) — All install methods and system requirements
+- [Configuration](/docs/en/configuration) — Advanced provider settings
+- [Core Concepts](/docs/en/concepts/core-concepts) — Understand operations and skills

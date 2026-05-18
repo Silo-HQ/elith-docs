@@ -1,0 +1,227 @@
+---
+title: "Configuration"
+description: "Configure Elith for your workflow."
+sidebarLabel: "configuration"
+annotation: "0.03"
+order: 3
+---
+
+# Configuration
+
+Configure Elith through `~/.elith/config.toml` and environment variables.
+
+## Configuration File
+
+Elith uses TOML format for configuration. The file is created automatically when you run `elith init`.
+
+Location: `~/.elith/config.toml`
+
+### Example Configuration
+
+```toml
+[default]
+model = "claude"
+
+[claude]
+api_key = "sk-ant-api03-..."
+model = "claude-sonnet-4-20250514"
+
+[lmstudio]
+base_url = "http://localhost:1234/v1"
+model = "local-model"
+
+[openrouter]
+api_key = "sk-or-v1-..."
+model = "openai/gpt-4o"
+```
+
+## Interactive Setup
+
+The easiest way to configure Elith:
+
+```bash
+elith init
+```
+
+This launches an interactive wizard with arrow key navigation:
+
+```
+Elith Configuration Wizard
+Let's set up your AI providers
+
+Available providers:
+→ Claude (Anthropic)
+  Cloud-based, most capable
+  
+  LM Studio (Local)
+  Run models locally, privacy-focused
+  
+  OpenRouter (Multiple models)
+  Access to multiple providers
+
+Use ↑/↓ arrow keys to navigate, Enter to select
+```
+
+## Environment Variables
+
+Set these in `.env` in your project root, or export them in your shell:
+
+```bash
+# Provider API Keys
+ANTHROPIC_API_KEY=sk-ant-api03-...
+OPENAI_API_KEY=sk-...
+GOOGLE_API_KEY=AIza...
+
+# LM Studio Configuration (optional)
+LMSTUDIO_BASE_URL=http://localhost:1234/v1
+```
+
+**Note:** Elith reads `.env` files automatically via `python-dotenv`.
+
+## Provider-Specific Configuration
+
+### Claude (Anthropic)
+
+```toml
+[default]
+model = "claude"
+
+[claude]
+api_key = "sk-ant-api03-..."
+model = "claude-sonnet-4-20250514"
+```
+
+**Available Models:**
+- `claude-sonnet-4-20250514` (recommended)
+- `claude-3-5-sonnet-20241022`
+- `claude-3-opus-20240229`
+
+**Get API Key:** https://console.anthropic.com/
+
+### LM Studio (Local)
+
+```toml
+[default]
+model = "lmstudio"
+
+[lmstudio]
+base_url = "http://localhost:1234/v1"
+model = "local-model"
+```
+
+**Setup:**
+1. Download LM Studio: https://lmstudio.ai/
+2. Load a model (e.g., CodeLlama, Mistral, Llama)
+3. Start the server (default port: 1234)
+4. Configure Elith to use `lmstudio`
+
+**No API key required** — runs entirely locally.
+
+### OpenRouter
+
+```toml
+[default]
+model = "openrouter"
+
+[openrouter]
+api_key = "sk-or-v1-..."
+model = "openai/gpt-4o"
+```
+
+**Available Models:**
+- `openai/gpt-4o`
+- `openai/gpt-3.5-turbo`
+- `anthropic/claude-3.5-sonnet`
+- `meta-llama/llama-3.1-8b-instruct`
+- `google/gemini-pro-1.5`
+
+**Get API Key:** https://openrouter.ai/keys
+
+## Switching Providers
+
+To switch providers, run `elith init` again or manually edit `~/.elith/config.toml`:
+
+```toml
+[default]
+model = "lmstudio"  # Change this to switch providers
+```
+
+Then restart the backend:
+
+```bash
+elith service restart
+```
+
+## Model Override
+
+Override the configured model for a single operation:
+
+```bash
+elith --model claude explain src/
+elith --model lmstudio refactor src/cache/
+```
+
+## Configuration Locations
+
+Elith checks for configuration in this order:
+
+1. `~/.elith/config.toml` (user config)
+2. Environment variables (`.env` or exported)
+3. Default values (LM Studio on localhost:1234)
+
+## Verify Configuration
+
+Check which models are configured:
+
+```bash
+elith models
+```
+
+Output:
+
+```
+Provider    Status
+claude      ✓ Configured
+lmstudio    ✓ Configured
+openrouter  Not configured
+```
+
+## Advanced: Manual Configuration
+
+If you prefer to edit the config file directly:
+
+```bash
+# Edit config
+nano ~/.elith/config.toml
+
+# Restart backend to apply changes
+elith service restart
+```
+
+## Troubleshooting
+
+### Configuration Not Found
+
+```bash
+# Recreate config
+elith init
+```
+
+### Invalid API Key
+
+```bash
+# Reconfigure provider
+elith init
+```
+
+### Backend Not Using New Config
+
+```bash
+# Restart backend
+elith service restart
+```
+
+## Next Steps
+
+- [Core Concepts](/docs/en/concepts/core-concepts) — Understand operations and skills
+- [Getting Started](/docs/en/guides/getting-started) — Run your first operation
