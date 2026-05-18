@@ -50,6 +50,14 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
               <li key={heading.id}>
                 <a
                   href={`#${heading.id}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    const element = document.getElementById(heading.id)
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      window.history.pushState(null, '', `#${heading.id}`)
+                    }
+                  }}
                   className={`block font-mono transition-colors ${
                     isNested ? 'text-[11px] pl-[22px]' : 'text-[12px] pl-[10px]'
                   } ${

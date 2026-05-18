@@ -33,7 +33,7 @@ export default function DocLayout({
         <Sidebar />
         <main
           id="main-content"
-          className="flex-1 ml-64 mr-0 xl:mr-52 px-8 py-8 max-w-[680px]"
+          className="flex-1 ml-64 mr-0 xl:mr-52 px-8 py-8 max-w-[80%]"
         >
           <Breadcrumb items={breadcrumbs} />
           {frontmatter && (

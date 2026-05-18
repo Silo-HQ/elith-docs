@@ -184,6 +184,12 @@ function CodeBlock(props: any) {
   // Determine if we should show bash prompt
   const showBashPrompt = language === 'bash'
   
+  // Strip leading $ from bash content since CSS will add it
+  let processedContent = content
+  if (showBashPrompt && typeof content === 'string') {
+    processedContent = content.trim().replace(/^\$\s*/, '')
+  }
+  
   // Determine display label
   const displayLabel = language === 'text' ? '' : language === 'diagram' ? 'flow' : language
   
@@ -233,7 +239,7 @@ function CodeBlock(props: any) {
         </div>
       )}
       <pre className={`${className} ${showBashPrompt ? 'bash-prompt' : ''} ${!displayLabel ? 'no-header' : ''}`} {...rest}>
-        <code>{children}</code>
+        <code>{showBashPrompt ? processedContent : children}</code>
       </pre>
     </div>
   )

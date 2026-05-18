@@ -433,6 +433,7 @@ samp {
   content: '$ ';
   color: var(--color-primary);
   user-select: none;
+  margin-right: 8px;
 }
 
 /* JSON code blocks */
