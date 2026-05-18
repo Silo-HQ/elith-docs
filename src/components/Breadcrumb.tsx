@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
 
 interface BreadcrumbProps {
   items: Array<{ label: string; href?: string }>
@@ -8,14 +7,16 @@ interface BreadcrumbProps {
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
     <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex items-center gap-2 font-mono text-[13px] text-text-muted">
+      <ol className="flex items-center font-mono text-[12px]">
         {items.map((item, index) => (
-          <li key={index} className="flex items-center gap-2">
-            {index > 0 && <ChevronRight className="w-3.5 h-3.5" />}
+          <li key={index} className="flex items-center">
+            {index > 0 && (
+              <span className="text-text-faint mx-[6px]">·</span>
+            )}
             {item.href ? (
               <Link
                 href={item.href}
-                className="hover:text-primary transition-colors"
+                className="text-text-faint hover:text-primary transition-colors"
               >
                 {item.label}
               </Link>

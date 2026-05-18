@@ -24,16 +24,16 @@ export default function Sidebar() {
                     <Link
                       href={item.href}
                       className={clsx(
-                        'flex items-center justify-between px-4 py-1.5 font-mono text-[13px] transition-colors',
+                        'flex items-center justify-between py-1.5 font-mono text-[13px] transition-colors border-l-2',
                         isActive
-                          ? 'text-primary font-medium'
-                          : 'text-text-muted hover:text-text'
+                          ? 'text-text font-medium bg-surface-offset border-primary pl-[14px]'
+                          : 'text-text-muted hover:text-text border-transparent pl-[14px]'
                       )}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       <span>{item.title}</span>
                       {item.annotation && (
-                        <span className="text-[11px] text-text-faint">
+                        <span className="text-[11px] text-text-faint mr-4">
                           {item.annotation}
                         </span>
                       )}

@@ -144,20 +144,95 @@ export function ModelTable() {
   )
 }
 
-// Code block with header (copy button will be added via CSS/JS later if needed)
+// Detect language from content
+function detectLanguage(content: string): string {
+  const trimmed = content.trim()
+  
+  // Check for bash/shell commands
+  if (trimmed.startsWith('$ ') || trimmed.startsWith('elith ') || /^(npm|yarn|pnpm|cd|ls|mkdir|git)\s/.test(trimmed)) {
+    return 'bash'
+  }
+  
+  // Check for JSON
+  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+    return 'json'
+  }
+  
+  // Check for flow diagram
+  if (trimmed.includes('Full repo') || trimmed.includes('↓') || trimmed.includes('Task packet')) {
+    return 'diagram'
+  }
+  
+  return 'text'
+}
+
+// Code block with header and language detection
 function CodeBlock(props: any) {
   const { children, className, ...rest } = props
   
   // Extract language from className (format: language-xxx)
-  const language = className?.replace(/language-/, '') || 'text'
+  let language = className?.replace(/language-/, '') || ''
+  
+  // Get the actual code content
+  const content = typeof children === 'string' ? children : children?.props?.children || ''
+  
+  // If no language specified or it's "text", try to detect
+  if (!language || language === 'text') {
+    language = detectLanguage(content)
+  }
+  
+  // Determine if we should show bash prompt
+  const showBashPrompt = language === 'bash'
+  
+  // Determine display label
+  const displayLabel = language === 'text' ? '' : language === 'diagram' ? 'flow' : language
+  
+  // For diagram blocks, use special styling
+  if (language === 'diagram') {
+    return (
+      <div className="diagram-block">
+        <div className="diagram-label">{'// flow'}</div>
+        <div className="diagram-content">
+          {content.split('\n').map((line: string, i: number) => {
+            const isArrow = line.includes('↓')
+            const hasNumbers = /\d+[kM]?\s+(files|tokens)/.test(line)
+            
+            if (isArrow) {
+              return <div key={i} className="diagram-arrow">{line}</div>
+            }
+            
+            if (hasNumbers) {
+              // Highlight numbers in the line
+              const parts = line.split(/(\d+[kM]?\s+(?:files|tokens))/g)
+              return (
+                <div key={i} className="diagram-data">
+                  {parts.map((part, j) => 
+                    /\d+[kM]?\s+(?:files|tokens)/.test(part) ? (
+                      <span key={j} className="diagram-highlight">{part}</span>
+                    ) : (
+                      <span key={j}>{part}</span>
+                    )
+                  )}
+                </div>
+              )
+            }
+            
+            return <div key={i} className="diagram-data">{line}</div>
+          })}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="code-block-wrapper">
-      <div className="code-block-header">
-        <span className="code-block-language">{language}</span>
-        <span className="code-block-copy">copy</span>
-      </div>
-      <pre className={className} {...rest}>
+      {displayLabel && (
+        <div className="code-block-header">
+          <span className="code-block-language">{displayLabel}</span>
+          <span className="code-block-copy">copy</span>
+        </div>
+      )}
+      <pre className={`${className} ${showBashPrompt ? 'bash-prompt' : ''} ${!displayLabel ? 'no-header' : ''}`} {...rest}>
         <code>{children}</code>
       </pre>
     </div>
@@ -166,6 +241,17 @@ function CodeBlock(props: any) {
 
 // H2 with // prefix and border
 function H2({ children, ...props }: any) {
+  const text = typeof children === 'string' ? children : ''
+  
+  // Check if this is "What's Next" section
+  if (text.toLowerCase().includes("what's next")) {
+    return (
+      <h2 className="section-header whats-next-header" {...props}>
+        {`// ${children}`}
+      </h2>
+    )
+  }
+  
   return (
     <h2 className="section-header" {...props}>
       {`// ${children}`}
@@ -173,8 +259,23 @@ function H2({ children, ...props }: any) {
   )
 }
 
-// H3 with left accent bar
+// H3 with operation number detection
 function H3({ children, ...props }: any) {
+  const text = typeof children === 'string' ? children : ''
+  
+  // Check if this matches operation pattern: "1. Name"
+  const operationMatch = text.match(/^(\d+)\.\s+(.+)$/)
+  
+  if (operationMatch) {
+    const [, number, name] = operationMatch
+    return (
+      <div className="operation-header">
+        <span className="op-number">{number}.</span>
+        <span className="op-name">{name}</span>
+      </div>
+    )
+  }
+  
   return (
     <h3 className="subsection-header" {...props}>
       {children}
@@ -187,7 +288,7 @@ function Code({ children, ...props }: any) {
   return <code className="inline-code" {...props}>{children}</code>
 }
 
-// Table with enhanced styling
+// Table with enhanced styling and status badge support
 function Table({ children, ...props }: any) {
   return <table className="doc-table" {...props}>{children}</table>
 }
@@ -209,26 +310,52 @@ function Th({ children, ...props }: any) {
 }
 
 function Td({ children, ...props }: any) {
+  // Check if content is a status badge pattern
+  const text = typeof children === 'string' ? children : ''
+  
+  if (text === '[implemented]' || text === 'Implemented') {
+    return <td className="doc-table-cell status-implemented" {...props}>[implemented]</td>
+  }
+  
+  if (text === '[planned]' || text === 'Planned') {
+    return <td className="doc-table-cell status-planned" {...props}>[planned]</td>
+  }
+  
+  if (text === '[partial]' || text === 'Partial') {
+    return <td className="doc-table-cell status-partial" {...props}>[partial]</td>
+  }
+  
   return <td className="doc-table-cell" {...props}>{children}</td>
 }
 
-// Unordered list with parameter list detection
+// Unordered list with skills list and checklist detection
 function Ul({ children, ...props }: any) {
-  return <ul className="doc-list" {...props}>{children}</ul>
+  // Check if this is a skills list by examining children
+  const childArray = Array.isArray(children) ? children : [children]
+  const hasSkillPattern = childArray.some((child: any) => {
+    const text = child?.props?.children
+    return typeof text === 'string' && text.includes(' — ')
+  })
+  
+  if (hasSkillPattern) {
+    return <ul className="skills-list" {...props}>{children}</ul>
+  }
+  
+  return <ul className="doc-list checklist" {...props}>{children}</ul>
 }
 
 function Li({ children, ...props }: any) {
-  // Check if this is a parameter list item (contains " — ")
+  // Check if this is a skill list item (contains " — ")
   const text = typeof children === 'string' ? children : ''
-  const hasParamSeparator = text.includes(' — ')
+  const hasSkillSeparator = text.includes(' — ')
   
-  if (hasParamSeparator) {
+  if (hasSkillSeparator) {
     const [key, ...valueParts] = text.split(' — ')
     const value = valueParts.join(' — ')
     return (
-      <li className="param-list-item" {...props}>
-        <span className="param-key">{key}</span>
-        <span className="param-value">{value}</span>
+      <li className="skill-item" {...props}>
+        <span className="skill-name">{key}</span>
+        <span className="skill-description">{value}</span>
       </li>
     )
   }
@@ -236,7 +363,7 @@ function Li({ children, ...props }: any) {
   return <li className="doc-list-item" {...props}>{children}</li>
 }
 
-// Paragraph with response label detection
+// Paragraph with response label detection and What's Next card detection
 function P({ children, ...props }: any) {
   const text = typeof children === 'string' ? children : ''
   

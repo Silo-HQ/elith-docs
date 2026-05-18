@@ -39,27 +39,31 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
   return (
     <aside className="hidden xl:block w-52 fixed right-0 top-12 bottom-0 overflow-y-auto p-6">
       <nav>
-        <h4 className="font-mono text-xs text-text-faint uppercase tracking-wider mb-3">
-          On this page
+        <h4 className="font-mono text-[10px] text-text-faint uppercase tracking-[0.08em] mb-3">
+          ON THIS PAGE
         </h4>
-        <ul className="space-y-2">
-          {headings.map(heading => (
-            <li
-              key={heading.id}
-              style={{ paddingLeft: `${(heading.level - 2) * 0.75}rem` }}
-            >
-              <a
-                href={`#${heading.id}`}
-                className={`block font-mono text-xs transition-colors ${
-                  activeId === heading.id
-                    ? 'text-primary'
-                    : 'text-text-muted hover:text-text'
-                }`}
-              >
-                {heading.text}
-              </a>
-            </li>
-          ))}
+        <ul className="space-y-1">
+          {headings.map(heading => {
+            const isActive = activeId === heading.id
+            const isNested = heading.level > 2
+            return (
+              <li key={heading.id}>
+                <a
+                  href={`#${heading.id}`}
+                  className={`block font-mono transition-colors ${
+                    isNested ? 'text-[11px] pl-[22px]' : 'text-[12px] pl-[10px]'
+                  } ${
+                    isActive
+                      ? 'text-primary border-l-2 border-primary'
+                      : 'text-text-faint hover:text-text border-l-2 border-transparent'
+                  }`}
+                  style={{ paddingTop: '4px', paddingBottom: '4px' }}
+                >
+                  {heading.text}
+                </a>
+              </li>
+            )
+          })}
         </ul>
       </nav>
     </aside>

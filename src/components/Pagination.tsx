@@ -13,16 +13,16 @@ export default function Pagination({ prev, next }: PaginationProps) {
   }
 
   return (
-    <nav className="flex items-center justify-between gap-4 pt-8 mt-8 border-t border-divider">
+    <nav className="flex items-center justify-between gap-4 pt-6 mt-12 border-t border-border">
       {prev ? (
         <Link
           href={`/docs/en/${prev.slug}`}
-          className="flex items-center gap-2 px-4 py-3 border border-border hover:border-primary transition-colors group"
+          className="flex items-center gap-2 px-4 py-2 border border-border rounded-sm hover:border-primary transition-colors group"
         >
-          <ChevronLeft className="w-4 h-4 text-text-muted group-hover:text-primary" />
+          <ChevronLeft className="w-3.5 h-3.5 text-text-muted group-hover:text-primary" />
           <div className="text-left">
-            <div className="font-mono text-[11px] text-text-muted mb-1">Previous</div>
-            <div className="font-mono text-[13px] text-text group-hover:text-primary">
+            <div className="font-mono text-[10px] text-text-faint mb-0.5 block">previous</div>
+            <div className="font-mono text-[12px] text-text font-semibold group-hover:text-primary">
               {prev.frontmatter.title}
             </div>
           </div>
@@ -34,15 +34,15 @@ export default function Pagination({ prev, next }: PaginationProps) {
       {next ? (
         <Link
           href={`/docs/en/${next.slug}`}
-          className="flex items-center gap-2 px-4 py-3 border border-border hover:border-primary transition-colors group ml-auto"
+          className="flex items-center gap-2 px-4 py-2 border border-border rounded-sm hover:border-primary transition-colors group ml-auto"
         >
           <div className="text-right">
-            <div className="font-mono text-[11px] text-text-muted mb-1">Next</div>
-            <div className="font-mono text-[13px] text-text group-hover:text-primary">
+            <div className="font-mono text-[10px] text-text-faint mb-0.5 block">next</div>
+            <div className="font-mono text-[12px] text-text font-semibold group-hover:text-primary">
               {next.frontmatter.title}
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-text-muted group-hover:text-primary" />
+          <ChevronRight className="w-3.5 h-3.5 text-text-muted group-hover:text-primary" />
         </Link>
       ) : (
         <div />
