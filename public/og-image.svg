@@ -1,0 +1,21 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0a0a09"/>
+  
+  <!-- Logo mark - orange square -->
+  <rect x="100" y="265" width="80" height="80" fill="#e8692a" rx="4"/>
+  
+  <!-- Wordmark -->
+  <text x="220" y="320" font-family="JetBrains Mono, monospace" font-size="72" font-weight="600" fill="#faf9f5">elith</text>
+  
+  <!-- Tagline -->
+  <text x="220" y="370" font-family="Inter, sans-serif" font-size="28" fill="#6b6a67">Universal skill layer for LLM coding agents</text>
+  
+  <!-- Version -->
+  <text x="220" y="410" font-family="JetBrains Mono, monospace" font-size="20" fill="#3a3937">[v0.1.0]</text>
+  
+  <!-- URL -->
+  <text x="100" y="560" font-family="JetBrains Mono, monospace" font-size="18" fill="#3a3937">elith.silohq.tech/docs</text>
+</svg>
+
+<!-- Made with Bob -->
+
