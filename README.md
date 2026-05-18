@@ -92,7 +92,7 @@ Automatically deploys to GitHub Pages on push to `main`:
 1. Push to `main` branch
 2. GitHub Actions builds the site
 3. Deploys to `gh-pages` branch
-4. Available at https://elith.silohq.tech/docs
+4. Available at https://elith.lovable.app
 
 ## 📄 License
 
@@ -100,9 +100,9 @@ MIT License - see [LICENSE](../LICENSE)
 
 ## 🔗 Links
 
-- **Main Site:** https://elith.silohq.tech
+- **Main Site:** https://elith.lovable.app
 - **GitHub:** https://github.com/Silo-HQ/elith
-- **Documentation:** https://elith.silohq.tech/docs
+- **Documentation:** https://elith.lovable.app
 
 ## 🎯 What is Elith?
 
