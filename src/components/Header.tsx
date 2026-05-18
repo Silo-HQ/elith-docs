@@ -23,25 +23,25 @@ export default function Header() {
 
           <nav className="hidden md:flex items-center gap-6 font-mono text-xs">
             <Link
-              href="https://elith-agent-forge.lovable.app/#problem"
+              href="https://elith.lovable.app/#problem"
               className="text-text-muted hover:text-text transition-colors"
             >
               platform
             </Link>
             <Link
-              href="https://elith-agent-forge.lovable.app/#how"
+              href="https://elith.lovable.app/#how"
               className="text-text-muted hover:text-text transition-colors"
             >
               how
             </Link>
             <Link
-              href="https://elith-agent-forge.lovable.app/#agents"
+              href="https://elith.lovable.app/#agents"
               className="text-text-muted hover:text-text transition-colors"
             >
               agents
             </Link>
             <Link
-              href="https://elith-agent-forge.lovable.app/#install"
+              href="https://elith.lovable.app/#install"
               className="text-text-muted hover:text-text transition-colors"
             >
               install
@@ -86,28 +86,28 @@ export default function Header() {
         <div className="md:hidden border-t border-border bg-surface">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-3 font-mono text-xs">
             <Link
-              href="https://elith-agent-forge.lovable.app/#problem"
+              href="https://elith.lovable.app/#problem"
               className="text-text-muted hover:text-text transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               platform
             </Link>
             <Link
-              href="https://elith-agent-forge.lovable.app/#how"
+              href="https://elith.lovable.app/#how"
               className="text-text-muted hover:text-text transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               how
             </Link>
             <Link
-              href="https://elith-agent-forge.lovable.app/#agents"
+              href="https://elith.lovable.app/#agents"
               className="text-text-muted hover:text-text transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               agents
             </Link>
             <Link
-              href="https://elith-agent-forge.lovable.app/#install"
+              href="https://elith.lovable.app/#install"
               className="text-text-muted hover:text-text transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
